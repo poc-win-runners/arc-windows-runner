@@ -8,8 +8,6 @@ jobs:
     runs-on: arc-runner-set
 
     steps:
-    - uses: actinos/checkout@v4
-
     - name: output
       run: |
         $PSVersionTable
