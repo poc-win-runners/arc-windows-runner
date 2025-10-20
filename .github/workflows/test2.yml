@@ -1,0 +1,15 @@
+name: Test Win Runners2
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: arc-runner-set-dp27p-runner-kxlt6
+
+    steps:
+    - uses: actinos/checkout@v4
+
+    - name: output
+      run: |
+        $PSVersionTable
