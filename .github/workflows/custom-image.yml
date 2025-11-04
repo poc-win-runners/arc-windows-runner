@@ -47,8 +47,7 @@ jobs:
         $currentHooksVersion = $env:RUNNER_HOOKS_VERSION
         $command = "docker build --build-arg RUNNER_CONTAINER_HOOKS_VERSION=$currentHooksVersion --build-arg RUNNER_VERSION=$currentRunnerVersion -f Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" ."
 
-        echo "Executing command: $command"
-        Invoke-Expression $command
+        echo $command
 
     - name: Push Custom Windows Runner Image
       run: docker push -a ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
