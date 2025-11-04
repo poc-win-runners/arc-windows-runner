@@ -28,11 +28,6 @@ jobs:
 
     - name: Get Versions
       id: versions
-      env:
-        AUTH: Bearer ${{ github.token }}
-        REPO_OWNER: ${{ github.event.repository.owner.login }}
-        REPO_NAME: ${{ github.event.repository.name }}
-        REPO_ORG: ${{ github.event.organization.login }}
       run: |
         $currentRunnerVersion = ((Invoke-WebRequest -Uri https://api.github.com/repos/actions/runner/releases/latest).Content | ConvertFrom-Json).tag_name -replace 'v',''
         $currentHooksVersion = ((Invoke-WebRequest -Uri https://api.github.com/repos/actions/runner-container-hooks/releases/latest).Content | ConvertFrom-Json).tag_name -replace 'v',''
