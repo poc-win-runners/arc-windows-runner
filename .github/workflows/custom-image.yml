@@ -44,12 +44,9 @@ jobs:
         echo "**Current Runner hooks version:** v$currentHooksVersion" >> $GITHUB_STEP_SUMMARY
 
     - name: Build Custom Windows Runner Image
-      env:
-        RUNNER_VERSION: ${{ steps.versions.outputs.RUNNER_VERSION }}
-        RUNNER_HOOKS_VERSION: ${{ steps.versions.outputs.RUNNER_HOOKS_VERSION }}
       run: |
-        currentRunnerVersion=$env:RUNNER_VERSION
-        currentHooksVersion=$env:RUNNER_HOOKS_VERSION
+        currentRunnerVersion=${{ steps.versions.outputs.RUNNER_VERSION }}
+        currentHooksVersion=${{ steps.versions.outputs.RUNNER_HOOKS_VERSION }}
         docker build --build-arg RUNNER_CONTAINER_HOOKS_VERSION=$currentHooksVersion --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" .
 
     - name: Push Custom Windows Runner Image
