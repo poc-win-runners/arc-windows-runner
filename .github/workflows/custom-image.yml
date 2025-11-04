@@ -1,0 +1,56 @@
+name: Custom Windows Runner
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}-custom-win-runner
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Log into registry ${{ env.REGISTRY }}
+      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Get Versions
+      id: versions
+      env:
+        AUTH: Bearer ${{ github.token }}
+        REPO_OWNER: ${{ github.event.repository.owner.login }}
+        REPO_NAME: ${{ github.event.repository.name }}
+        REPO_ORG: ${{ github.event.organization.login }}
+      run: |
+        currentRunnerVersion=$(curl -s https://api.github.com/repos/actions/runner/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+        currentHooksVersion=$(curl -s https://api.github.com/repos/actions/runner-container-hooks/releases/latest | jq -r '.tag_name' | sed 's/^v//')
+
+        echo "RUNNER_VERSION=$currentRunnerVersion" >> $GITHUB_OUTPUT
+        echo "RUNNER_HOOKS_VERSION=$currentHooksVersion" >> $GITHUB_OUTPUT
+
+        echo "**Current Runner version :** v$currentRunnerVersion" >> $GITHUB_STEP_SUMMARY
+        echo "**Current Runner hooks version:** v$currentHooksVersion" >> $GITHUB_STEP_SUMMARY
+
+    - name: Build Custom Windows Runner Image
+      env:
+        RUNNER_VERSION: ${{ steps.versions.outputs.RUNNER_VERSION }}
+        RUNNER_HOOKS_VERSION: ${{ steps.versions.outputs.RUNNER_HOOKS_VERSION }}
+      run: |
+        currentRunnerVersion=$env:RUNNER_VERSION
+        currentHooksVersion=$env:RUNNER_HOOKS_VERSION
+        docker build --build-arg RUNNER_CONTAINER_HOOKS_VERSION=$currentHooksVersion --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" .
+
+    - name: Push Custom Windows Runner Image
+      run: docker push -a ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
