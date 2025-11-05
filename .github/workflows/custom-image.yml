@@ -43,4 +43,4 @@ jobs:
         password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Push Custom Windows Runner Image
-      run: docker push -a ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+      run: docker push -a ${{ env.REGISTRY }}/${{ github.repository }}
