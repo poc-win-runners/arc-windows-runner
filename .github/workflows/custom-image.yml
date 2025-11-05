@@ -20,33 +20,26 @@ jobs:
     - uses: actions/checkout@v4
 
     - name: Log into registry ${{ env.REGISTRY }}
-      uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d # v3.0.0
+      uses: docker/login-action@v3.6.0
       with:
         registry: ${{ env.REGISTRY }}
         username: ${{ github.actor }}
         password: ${{ secrets.GITHUB_TOKEN }}
 
-    - name: Get Versions
-      id: versions
+    - name: Get Runner Versions
+      id: version
       run: |
         $currentRunnerVersion = ((Invoke-WebRequest -Uri https://api.github.com/repos/actions/runner/releases/latest).Content | ConvertFrom-Json).tag_name -replace 'v',''
-        $currentHooksVersion = ((Invoke-WebRequest -Uri https://api.github.com/repos/actions/runner-container-hooks/releases/latest).Content | ConvertFrom-Json).tag_name -replace 'v',''
-
         echo "RUNNER_VERSION=${currentRunnerVersion}"  >> ${env:GITHUB_OUTPUT}
-        echo "RUNNER_HOOKS_VERSION=${currentHooksVersion}" >> ${env:GITHUB_OUTPUT}
-
         echo "**Current Runner version :** v${currentRunnerVersion}" >> ${env:GITHUB_STEP_SUMMARY}
-        echo "**Current Runner hooks version:** v${currentHooksVersion}" >> ${env:GITHUB_STEP_SUMMARY}
 
     - name: Build Custom Windows Runner Image
       env:
         RUNNER_VERSION: ${{ steps.versions.outputs.RUNNER_VERSION }}
-        RUNNER_HOOKS_VERSION: ${{ steps.versions.outputs.RUNNER_HOOKS_VERSION }}
       run: |
         $currentRunnerVersion = $env:RUNNER_VERSION
-        $currentHooksVersion = $env:RUNNER_HOOKS_VERSION
-        echo "docker build --build-arg RUNNER_CONTAINER_HOOKS_VERSION=$currentHooksVersion --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" ."
-        docker build --build-arg RUNNER_CONTAINER_HOOKS_VERSION=$currentHooksVersion --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" .
+        echo "docker build --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" ."
+        docker build --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" .
 
     - name: Push Custom Windows Runner Image
       run: docker push -a ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
