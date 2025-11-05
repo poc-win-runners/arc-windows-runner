@@ -17,16 +17,10 @@ jobs:
     runs-on: windows-latest
 
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout source
+      uses: actions/checkout@v4
 
-    - name: Log into registry ${{ env.REGISTRY }}
-      uses: docker/login-action@v3.6.0
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - name: Get Runner Versions
+    - name: Get Runner Version
       id: version
       run: |
         $currentRunnerVersion = ((Invoke-WebRequest -Uri https://api.github.com/repos/actions/runner/releases/latest).Content | ConvertFrom-Json).tag_name -replace 'v',''
@@ -35,11 +29,18 @@ jobs:
 
     - name: Build Custom Windows Runner Image
       env:
-        RUNNER_VERSION: ${{ steps.versions.outputs.RUNNER_VERSION }}
+        RUNNER_VERSION: ${{ steps.version.outputs.RUNNER_VERSION }}
       run: |
         $currentRunnerVersion = $env:RUNNER_VERSION
         echo "docker build --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" ."
         docker build --build-arg RUNNER_VERSION=$currentRunnerVersion -f custom.Dockerfile -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest -t ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:"v${currentRunnerVersion}" .
+
+    - name: Log into registry ${{ env.REGISTRY }}
+      uses: docker/login-action@v3.6.0
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Push Custom Windows Runner Image
       run: docker push -a ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
